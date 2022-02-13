@@ -12,13 +12,11 @@ int main() {
     b[i] = std::uniform_real_distribution<>(-1, 1)(engine);
   }
 
-  int t = 1 << 10;
+  int t = 1 << 20;
 
-  double seconds = 0;
+  std::chrono::high_resolution_clock::time_point t1 =
+      std::chrono::high_resolution_clock::now();
   for (int i = 0; i < t; i++) {
-    std::chrono::high_resolution_clock::time_point t1 =
-        std::chrono::high_resolution_clock::now();
-
     asm volatile(R"(
 vxorps %%ymm8, %%ymm8, %%ymm8
 vxorps %%ymm9, %%ymm9, %%ymm9
@@ -124,13 +122,13 @@ vmovaps %%ymm14, 192(%2)
 vmovaps %%ymm15, 224(%2)
   )" ::"r"(a),
                  "r"(b), "r"(c));
-
-    std::chrono::high_resolution_clock::time_point t2 =
-        std::chrono::high_resolution_clock::now();
-    seconds +=
-        std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1)
-            .count();
   }
+
+  std::chrono::high_resolution_clock::time_point t2 =
+      std::chrono::high_resolution_clock::now();
+  double seconds =
+      std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1)
+          .count();
 
   int flag = 1;
   for (int i = 0; i < 8; i++)
