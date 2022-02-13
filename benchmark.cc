@@ -2,7 +2,7 @@
 #include <iostream>
 
 int main() {
-  int t = 1 << 30;
+  int t = 1 << 20;
 
   std::chrono::high_resolution_clock::time_point t1 =
       std::chrono::high_resolution_clock::now();
