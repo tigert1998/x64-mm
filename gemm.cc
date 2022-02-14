@@ -1,5 +1,59 @@
 #include "gemm.h"
 
+#include <x86intrin.h>
+
+#include <cstdlib>
+#include <cstring>
+
+#include "utils.h"
+
+void Pack8x4(int64_t width, int64_t depth, int64_t stride, const float *matrix,
+             float *packed_matrix) {
+  int64_t depth_padded = RoundUp(depth, 4);
+  if (depth_padded > depth) {
+    memset(packed_matrix + depth * 8, 0,
+           sizeof(float) * (depth_padded - depth) * 8);
+  }
+
+  const float *data = matrix;
+  float *packed_ptr = packed_matrix;
+  if (width < 8) {
+    for (int64_t i = 0; i < depth; i++) {
+      memcpy(packed_ptr, data, width * sizeof(float));
+      memset(packed_ptr + width, 0, (8 - width) * sizeof(float));
+      packed_ptr += 8;
+      data += stride;
+    }
+  } else {
+    for (int64_t i = 0; i < depth; i++) {
+      __m256 vec = _mm256_loadu_ps(data);
+      _mm256_storeu_ps(packed_ptr, vec);
+      packed_ptr += 8;
+      data += stride;
+    }
+  }
+}
+
+void Unpack8x8(const float *packed_output, int64_t rows, int64_t cols,
+               int64_t stride, float *output) {
+  const float *packed_ptr = packed_output;
+  float *output_ptr = output;
+  if (cols < 8) {
+    for (int64_t i = 0; i < rows; i++) {
+      memcpy(output_ptr, packed_ptr, cols * sizeof(float));
+      packed_ptr += 8;
+      output_ptr += stride;
+    }
+  } else {
+    for (int64_t i = 0; i < rows; i++) {
+      __m256 vec = _mm256_loadu_ps(packed_ptr);
+      _mm256_storeu_ps(output_ptr, vec);
+      packed_ptr += 8;
+      output_ptr += stride;
+    }
+  }
+}
+
 void ComputeBlock(const float *packed_lhs_data, const float *packed_rhs_data,
                   const int64_t depth_padded, float *packed_output_data) {
   const float *lhs_ptr = packed_lhs_data;
@@ -124,5 +178,6 @@ vmovaps %%ymm15, 224(%[packed_output_data])
   )"
                : [lhs_ptr] "+r"(lhs_ptr), [rhs_ptr] "+r"(rhs_ptr),
                  [r_depth_block_count] "+r"(r_depth_block_count)
-               : [packed_output_data] "r"(packed_output_data));
+               : [packed_output_data] "r"(packed_output_data)
+               : "cc", "memory");
 }
