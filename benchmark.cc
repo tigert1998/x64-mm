@@ -34,11 +34,13 @@ vfmadd231ps %%ymm7, %%ymm7, %%ymm7
 vfmadd231ps %%ymm8, %%ymm8, %%ymm8
 vfmadd231ps %%ymm9, %%ymm9, %%ymm9
 
-addl $-1, %1
+addl $-1, %[t]
 jne loop
   )"
                : [tmp_ptr] "+r"(tmp_ptr)
-               : "r"(t));
+               : [t] "r"(t)
+               : "ymm0", "ymm1", "ymm2", "ymm3", "ymm4", "ymm5", "ymm6", "ymm7",
+                 "ymm8", "ymm9");
   std::chrono::high_resolution_clock::time_point t2 =
       std::chrono::high_resolution_clock::now();
 
