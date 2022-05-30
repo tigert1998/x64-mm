@@ -4,6 +4,7 @@
 #include "cblas.h"
 
 void BenchmarkOpenBLAS(int rows, int depth, int cols) {
+  openblas_set_num_threads(1);
   float *a = new float[rows * depth];
   float *b = new float[depth * cols];
   float *c = new float[rows * cols];

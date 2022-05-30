@@ -10,3 +10,8 @@ target_compile_options(main PUBLIC -mavx2)
 
 add_executable(benchmark_openblas "benchmark_openblas.cc")
 target_link_libraries(benchmark_openblas openblas_static)
+target_include_directories(
+    benchmark_openblas PRIVATE
+    "third_party/OpenBLAS"
+    "${CMAKE_BINARY_DIR}/third_party/OpenBLAS"
+)
