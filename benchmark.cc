@@ -2,21 +2,24 @@
 #include <iostream>
 
 int main() {
-  int t = 1 << 20;
+  int t = 1 << 28;
+
+  float tmp[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+  float* tmp_ptr = tmp;
 
   std::chrono::high_resolution_clock::time_point t1 =
       std::chrono::high_resolution_clock::now();
   asm volatile(R"(
-vxorps %%ymm0, %%ymm0, %%ymm0
-vxorps %%ymm1, %%ymm1, %%ymm1
-vxorps %%ymm2, %%ymm2, %%ymm2
-vxorps %%ymm3, %%ymm3, %%ymm3
-vxorps %%ymm4, %%ymm4, %%ymm4
-vxorps %%ymm5, %%ymm5, %%ymm5
-vxorps %%ymm6, %%ymm6, %%ymm6
-vxorps %%ymm7, %%ymm7, %%ymm7
-vxorps %%ymm8, %%ymm8, %%ymm8
-vxorps %%ymm9, %%ymm9, %%ymm9
+vbroadcastss 0(%[tmp_ptr]), %%ymm0
+vbroadcastss 4(%[tmp_ptr]), %%ymm1
+vbroadcastss 8(%[tmp_ptr]), %%ymm2
+vbroadcastss 12(%[tmp_ptr]), %%ymm3
+vbroadcastss 16(%[tmp_ptr]), %%ymm4
+vbroadcastss 20(%[tmp_ptr]), %%ymm5
+vbroadcastss 24(%[tmp_ptr]), %%ymm6
+vbroadcastss 28(%[tmp_ptr]), %%ymm7
+vbroadcastss 32(%[tmp_ptr]), %%ymm8
+vbroadcastss 36(%[tmp_ptr]), %%ymm9
 
 loop:
 
@@ -31,9 +34,11 @@ vfmadd231ps %%ymm7, %%ymm7, %%ymm7
 vfmadd231ps %%ymm8, %%ymm8, %%ymm8
 vfmadd231ps %%ymm9, %%ymm9, %%ymm9
 
-addl $-1, %0
+addl $-1, %1
 jne loop
-  )" ::"r"(t));
+  )"
+               : [tmp_ptr] "+r"(tmp_ptr)
+               : "r"(t));
   std::chrono::high_resolution_clock::time_point t2 =
       std::chrono::high_resolution_clock::now();
 
