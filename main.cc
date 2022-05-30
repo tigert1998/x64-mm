@@ -104,7 +104,7 @@ double BenchmarkGEMM(int64_t rows, int64_t depth, int64_t cols,
   double flops_per_iter = rows * depth * cols * 2;
   double flops = flops_per_iter * num_runs;
 
-  return flops / seconds / (1 << 30);
+  return flops / seconds / (1e9);
 }
 
 int main() {

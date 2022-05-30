@@ -24,7 +24,7 @@ void BenchmarkOpenBLAS(int rows, int depth, int cols) {
       std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1)
           .count();
   double flops_per_second = flops / seconds;
-  printf("%.4f GFLOPS\n", flops_per_second / (1 << 30));
+  printf("%.4f GFLOPS\n", flops_per_second / (1e9));
 
   delete[] a;
   delete[] b;
