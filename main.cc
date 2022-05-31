@@ -54,13 +54,14 @@ double BenchmarkGEMM(int64_t rows, int64_t depth, int64_t cols,
 
   output.resize(rows * cols);
 
+  constexpr int64_t eight = 8;
   // packing
   for (int64_t i = 0; i < rows; i += 8) {
-    int64_t width = std::min(8l, rows - i);
+    int64_t width = std::min(eight, rows - i);
     Pack8x4(width, depth, rows, lhs.data() + i, packed_lhs + i * depth_padded);
   }
   for (int64_t i = 0; i < cols; i += 8) {
-    int64_t width = std::min(8l, cols - i);
+    int64_t width = std::min(eight, cols - i);
     Pack8x4(width, depth, cols, rhs.data() + i, packed_rhs + i * depth_padded);
   }
 
@@ -81,14 +82,15 @@ double BenchmarkGEMM(int64_t rows, int64_t depth, int64_t cols,
   // unpacking
   for (int64_t i = 0; i < rows_padded; i += 8)
     for (int64_t j = 0; j < cols_padded; j += 8) {
-      Unpack8x8(packed_output + i * cols_padded + j * 8, std::min(8l, rows - i),
-                std::min(8l, cols - j), cols, output.data() + i * cols + j);
+      Unpack8x8(packed_output + i * cols_padded + j * 8,
+                std::min(eight, rows - i), std::min(eight, cols - j), cols,
+                output.data() + i * cols + j);
     }
 
   // free memory
-  free(packed_lhs);
-  free(packed_rhs);
-  free(packed_output);
+  _mm_free(packed_lhs);
+  _mm_free(packed_rhs);
+  _mm_free(packed_output);
 
   for (int64_t i = 0; i < rows * cols; i++) {
     if (std::abs(answer[i] - output[i]) > 1e-4) {
